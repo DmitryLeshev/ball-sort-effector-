@@ -1,0 +1,31 @@
+@font-face {
+  font-weight: normal;
+  font-family: "Password";
+  font-style: normal;
+  font-display: auto;
+  src: local("Password"),
+    url(../../shared/assets/fonts/password/Password.woff2) format("woff2"),
+    url(../../shared/assets/fonts/password/Password.woff2) format("woff");
+  unicode-range: U+0021-007E;
+}
+
+@font-face {
+  font-weight: normal;
+  font-family: "Roboto";
+  font-style: normal;
+  font-display: auto;
+  src: local("Password"),
+    url(../../shared/assets/fonts/roboto/Roboto-Black.ttf) format("ttf"),
+    url(../../shared/assets/fonts/roboto/Roboto-BlackItalic.ttf) format("ttf"),
+    url(../../shared/assets/fonts/roboto/Roboto-Bold.ttf) format("ttf"),
+    url(../../shared/assets/fonts/roboto/Roboto-BoldItalic.ttf) format("ttf"),
+    url(../../shared/assets/fonts/roboto/Roboto-Italic.ttf) format("ttf"),
+    url(../../shared/assets/fonts/roboto/Roboto-Light.ttf) format("ttf"),
+    url(../../shared/assets/fonts/roboto/Roboto-LightItalic.ttf) format("ttf"),
+    url(../../shared/assets/fonts/roboto/Roboto-Medium.ttf) format("ttf"),
+    url(../../shared/assets/fonts/roboto/Roboto-MediumItalic.ttf) format("ttf"),
+    url(../../shared/assets/fonts/roboto/Roboto-Regular.ttf) format("ttf"),
+    url(../../shared/assets/fonts/roboto/Roboto-Thin.ttf) format("ttf"),
+    url(../../shared/assets/fonts/roboto/Roboto-ThinItalic.ttf) format("ttf");
+  unicode-range: U+0021-007E;
+}
