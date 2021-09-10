@@ -4,10 +4,27 @@ import {
   createEffect,
   createEvent,
   createStore,
+  guard,
   sample,
 } from "effector";
 
 import _ from "lodash";
+
+// config
+export type BallColor = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
+
+const COLORS_IN_GAME = 4;
+const BALLS_IN_TUBE = 4;
+
+// lib
+function getCountOfTubes(colors: number) {
+  return colors + 2; // magic
+}
+function isComplete({ balls }: Pick<Tube, "balls">): boolean {
+  if (balls.length < BALLS_IN_TUBE) return false;
+  const firstBall = balls[0];
+  return balls.every((ball) => ball === firstBall);
+}
 
 export interface Tube {
   balls: BallColor[];
@@ -21,12 +38,6 @@ const tubeClicked = createEvent<MouseEvent<HTMLDivElement>>();
 const tubeSelected = tubeClicked.map((event) =>
   Number(event.currentTarget.dataset.position)
 );
-
-export type BallColor = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
-
-const COLORS_IN_GAME = 4;
-const BALLS_IN_TUBE = 4;
-const getCountOfTubes = (colors: number) => colors + 2; // magic
 
 const $state = createStore<"start" | "ingame" | "won">("start");
 const $moves = createStore(0);
@@ -42,7 +53,7 @@ const $field = combine(
       const isCurrent = selectedTubeIdx === idx;
       const over = isCurrent ? _.head(balls) ?? null : null;
       const leftBalls = isCurrent ? balls.slice(1) : balls;
-      return { balls: leftBalls, over };
+      return { balls: leftBalls, over, complete: isComplete({ balls }) };
     });
   }
 );
@@ -78,16 +89,73 @@ generateTubesFx.use(({ colorsCount }) => {
 
 $tubes.on(generateTubesFx.doneData, (_, tubes) => tubes);
 
-sample({
+const tubeWillChange = sample({
   clock: tubeSelected,
   source: [$tubes, $currentSelectedTubeIndex],
-  fn: ([tube, currentTubeIndex], tubeClicked) => {
-    return tubeClicked;
-  },
-  target: $currentSelectedTubeIndex,
+  fn: ([tubes, currentIndex], selectedIndex) => ({
+    tubes,
+    currentIndex,
+    selectedIndex,
+  }),
 });
 
+const ballUplift = guard({
+  source: tubeWillChange,
+  filter: ({ tubes, currentIndex, selectedIndex }) => {
+    return currentIndex === null && tubes[selectedIndex].balls.length !== 0;
+  },
+});
+
+$currentSelectedTubeIndex.on(
+  ballUplift,
+  (_, { selectedIndex }) => selectedIndex
+);
+
+const ballDownliftBack = guard({
+  source: tubeWillChange,
+  filter: ({ currentIndex, selectedIndex }) => {
+    return currentIndex === selectedIndex;
+  },
+});
+
+$currentSelectedTubeIndex.on(ballDownliftBack, () => null);
+
+const ballMoved = guard({
+  source: tubeWillChange,
+  filter: ({ tubes, currentIndex, selectedIndex }) => {
+    if (currentIndex === null) return false;
+    if (currentIndex === selectedIndex) return false;
+
+    const targetTube = tubes[selectedIndex];
+    if (targetTube.balls.length >= BALLS_IN_TUBE) return false;
+    const sourceTube = tubes[currentIndex];
+
+    const sourceBall = _.head(sourceTube.balls);
+    const targetBall = _.head(targetTube.balls);
+
+    const isTargetTubeEmpty = targetBall === undefined;
+
+    return isTargetTubeEmpty ? true : targetBall === sourceBall;
+  },
+});
+
+$tubes.on(ballMoved, (__, { tubes, currentIndex, selectedIndex }) => {
+  const sourceTube = tubes[currentIndex ?? 0];
+  const sourceBall = _.head(sourceTube.balls)!;
+
+  return tubes.map((tube, idx) => {
+    if (idx === currentIndex) return { balls: tube.balls.slice(1) };
+    if (idx === selectedIndex) return { balls: [sourceBall, ...tube.balls] };
+    return tube;
+  });
+});
+
+$currentSelectedTubeIndex.on(ballMoved, () => null);
+$moves.on(ballMoved, (count) => count + 1);
+
 $state.reset(toMainMenuClicked);
+$moves.reset(toMainMenuClicked, restartClicked);
+$currentSelectedTubeIndex.reset(restartClicked);
 
 export const stores = { $state, $moves, $tubes, $field };
 export const events = {

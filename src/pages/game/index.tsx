@@ -31,13 +31,16 @@ const View = ({
   const { t } = useTranslation();
   const classes = useStyles();
 
-  const tubes = useList(model.stores.$field, ({ balls, over }, index) => (
-    <UI.Tube
-      tube={{ balls, over, complete: false }}
-      position={index}
-      onClick={tubeClicked}
-    />
-  ));
+  const tubes = useList(
+    model.stores.$field,
+    ({ balls, over, complete }, index) => (
+      <UI.Tube
+        tube={{ balls, over, complete }}
+        position={index}
+        onClick={tubeClicked}
+      />
+    )
+  );
 
   return (
     <Molec.Page className={classes.page} title={t("pages:game.title")}>
@@ -56,7 +59,7 @@ const GamePage = reflect({
   view: View,
   bind: {
     isWon: model.stores.$state.map((state) => state === "won"),
-    moves: 0,
+    moves: model.stores.$moves.map((m) => m),
     toMainMenuClicked: model.events.toMainMenuClicked,
     restartClicked: model.events.restartClicked,
     tubeClicked: model.events.tubeClicked,
