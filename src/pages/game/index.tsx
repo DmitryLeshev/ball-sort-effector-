@@ -4,13 +4,13 @@ import { RouteChildrenProps } from "react-router-dom";
 import { createStyles, makeStyles } from "@material-ui/core";
 import { useTranslation } from "react-i18next";
 
+import { useList, useStore } from "effector-react";
 import { reflect } from "@effector/reflect";
-import { useList } from "effector-react";
 
 import { model, UI } from "entities/game";
 
-import { Theme } from "shared/types";
 import { Molec, Atom } from "shared/ui";
+import { Theme } from "shared/types";
 
 type Props = RouteChildrenProps<{}> & {
   isWon: boolean;
@@ -23,13 +23,13 @@ type Props = RouteChildrenProps<{}> & {
 const View = ({
   match,
   isWon,
-  moves,
   toMainMenuClicked,
   restartClicked,
   tubeClicked,
 }: Props) => {
   const { t } = useTranslation();
   const classes = useStyles();
+  const moves = useStore(model.stores.$moves);
 
   const tubes = useList(
     model.stores.$field,
@@ -50,7 +50,7 @@ const View = ({
         <UI.Moves moves={moves} />
       </div>
       <div className={classes.container}>{tubes}</div>
-      {isWon && <UI.WonScreen moves={moves} />}
+      {isWon && <UI.WonScreen moves={moves} action={toMainMenuClicked} />}
     </Molec.Page>
   );
 };
@@ -59,7 +59,6 @@ const GamePage = reflect({
   view: View,
   bind: {
     isWon: model.stores.$state.map((state) => state === "won"),
-    moves: model.stores.$moves.map((m) => m),
     toMainMenuClicked: model.events.toMainMenuClicked,
     restartClicked: model.events.restartClicked,
     tubeClicked: model.events.tubeClicked,

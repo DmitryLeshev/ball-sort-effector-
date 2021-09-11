@@ -10,37 +10,21 @@ import {
 
 import _ from "lodash";
 
-// config
-export type BallColor = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
-
-const COLORS_IN_GAME = 4;
-const BALLS_IN_TUBE = 4;
-
-// lib
-function getCountOfTubes(colors: number) {
-  return colors + 2; // magic
-}
-function isComplete({ balls }: Pick<Tube, "balls">): boolean {
-  if (balls.length < BALLS_IN_TUBE) return false;
-  const firstBall = balls[0];
-  return balls.every((ball) => ball === firstBall);
-}
-
-export interface Tube {
-  balls: BallColor[];
-}
+import { BALLS_IN_TUBE, COLORS_IN_GAME, BallColor, Tube } from "../config";
+import { getCountOfTubes, isComplete } from "../lib";
 
 const startClicked = createEvent<MouseEvent<HTMLButtonElement>>();
 const restartClicked = createEvent<MouseEvent<HTMLButtonElement>>();
 const toMainMenuClicked = createEvent<MouseEvent<HTMLButtonElement>>();
 const tubeClicked = createEvent<MouseEvent<HTMLDivElement>>();
+const gameFinishedSuccessfylly = createEvent();
 
 const tubeSelected = tubeClicked.map((event) =>
   Number(event.currentTarget.dataset.position)
 );
 
 const $state = createStore<"start" | "ingame" | "won">("start");
-const $moves = createStore(0);
+const $moves = createStore<number>(0);
 
 const $tubes = createStore<Tube[]>([]);
 const $currentSelectedTubeIndex = createStore<number | null>(null);
@@ -56,6 +40,10 @@ const $field = combine(
       return { balls: leftBalls, over, complete: isComplete({ balls }) };
     });
   }
+);
+
+const $filledTubesCount = $field.map(
+  (tubes) => tubes.filter(({ complete }) => complete).length
 );
 
 const generateTubesFx = createEffect<{ colorsCount: number }, Tube[]>();
@@ -150,8 +138,16 @@ $tubes.on(ballMoved, (__, { tubes, currentIndex, selectedIndex }) => {
   });
 });
 
-$currentSelectedTubeIndex.on(ballMoved, () => null);
 $moves.on(ballMoved, (count) => count + 1);
+$currentSelectedTubeIndex.on(ballMoved, () => null);
+
+guard({
+  source: $filledTubesCount,
+  filter: (count) => count === COLORS_IN_GAME,
+  target: gameFinishedSuccessfylly,
+});
+
+$state.on(gameFinishedSuccessfylly, () => "won");
 
 $state.reset(toMainMenuClicked);
 $moves.reset(toMainMenuClicked, restartClicked);

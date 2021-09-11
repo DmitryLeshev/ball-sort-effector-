@@ -1,5 +1,4 @@
-import { BallColor } from "../model";
-
+export type BallColor = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11;
 export const colors: Record<BallColor, [string, string]> = {
   0: ["#8F7E22", "#FFE600"],
   1: ["#247516", "#70FF00"],
@@ -14,3 +13,10 @@ export const colors: Record<BallColor, [string, string]> = {
   10: ["#79480F", "#FF7A00"],
   11: ["#343434", "#B1B1B1"],
 };
+
+export interface Tube {
+  balls: BallColor[];
+}
+
+export const COLORS_IN_GAME = 4;
+export const BALLS_IN_TUBE = 4;
